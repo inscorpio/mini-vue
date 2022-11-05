@@ -32,4 +32,31 @@ describe('effect', () => {
     expect(foo).toBe(12)
     expect(res).toBe('foo')
   })
+
+  it('scheduler', () => {
+    let dummy, run
+
+    const scheduler = vi.fn(() => {
+      run = runner
+    })
+
+    const obj = reactive({ foo: 1 })
+
+    const runner = effect(
+      () => {
+        dummy = obj.foo
+      },
+      { scheduler },
+    )
+
+    expect(scheduler).not.toHaveBeenCalled()
+    expect(dummy).toBe(1)
+
+    obj.foo++
+    expect(scheduler).toHaveBeenCalledOnce()
+    expect(dummy).toBe(1)
+
+    run()
+    expect(dummy).toBe(2)
+  })
 })

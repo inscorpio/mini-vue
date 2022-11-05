@@ -3,20 +3,28 @@ let activeEffect
 class ReactiveEffect {
   private _fn: any
 
-  constructor(fn) {
+  constructor(fn, public scheduler?) {
     this._fn = fn
+    this.scheduler = scheduler
   }
 
   run() {
-    // eslint-disable-next-line @typescript-eslint/no-this-alias
     activeEffect = this
     return this._fn()
   }
 }
 
-export const effect = (fn) => {
-  const reactiveEffect = new ReactiveEffect(fn)
+export declare interface EffectOptions {
+  scheduler: Function
+}
+
+export const effect = (fn, options?: EffectOptions) => {
+  const { scheduler } = options ?? {}
+
+  const reactiveEffect = new ReactiveEffect(fn, scheduler)
+
   reactiveEffect.run()
+
   return reactiveEffect.run.bind(reactiveEffect)
 }
 
@@ -40,6 +48,10 @@ export const track = (target, key) => {
 export const trigger = (target, key) => {
   const depsMap = targetMap.get(target)
   const deps = depsMap.get(key)
-  for (const reactiveEffect of deps)
-    reactiveEffect.run()
+  for (const reactiveEffect of deps) {
+    const { scheduler } = reactiveEffect
+    scheduler
+      ? reactiveEffect.scheduler()
+      : reactiveEffect.run()
+  }
 }
