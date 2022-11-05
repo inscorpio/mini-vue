@@ -1,0 +1,5 @@
+# mini-vue
+
+## setup
+
+- monorepo
