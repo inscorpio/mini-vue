@@ -10,13 +10,14 @@ class ReactiveEffect {
   run() {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     activeEffect = this
-    this._fn()
+    return this._fn()
   }
 }
 
 export const effect = (fn) => {
   const reactiveEffect = new ReactiveEffect(fn)
   reactiveEffect.run()
+  return reactiveEffect.run.bind(reactiveEffect)
 }
 
 // targetMap: [[target: depsMap]]
