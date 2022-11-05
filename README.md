@@ -4,3 +4,4 @@
 
 - monorepo
 - typescrip
+- vitest
