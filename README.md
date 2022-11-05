@@ -5,3 +5,4 @@
 - monorepo
 - typescrip
 - vitest
+- eslint

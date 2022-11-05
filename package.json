@@ -10,6 +10,8 @@
   "author": "Linyx",
   "license": "MIT",
   "devDependencies": {
+    "@antfu/eslint-config": "^0.29.3",
+    "eslint": "^8.26.0",
     "typescript": "^4.8.4",
     "vitest": "^0.24.5"
   }
