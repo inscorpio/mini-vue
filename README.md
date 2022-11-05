@@ -3,3 +3,4 @@
 ## setup
 
 - monorepo
+- typescrip

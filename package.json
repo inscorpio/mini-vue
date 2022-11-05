@@ -8,5 +8,8 @@
   },
   "keywords": [],
   "author": "Linyx",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^4.8.4"
+  }
 }
