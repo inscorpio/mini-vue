@@ -56,6 +56,9 @@ export const track = (target, key) => {
 
   deps.add(activeEffect)
 
+  if (!activeEffect)
+    return
+
   activeEffect.deps.push(deps)
 }
 
