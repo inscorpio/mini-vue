@@ -17,8 +17,10 @@ importers:
   packages/reactivity:
     specifiers:
       '@mini-vue/reactivity': workspace:^1.0.0
+      '@mini-vue/shared': workspace:^1.0.0
     devDependencies:
       '@mini-vue/reactivity': 'link:'
+      '@mini-vue/shared': link:../shared
 
 packages:
 

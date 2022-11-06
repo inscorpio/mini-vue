@@ -1,3 +1,5 @@
+import { extend } from '@mini-vue/shared'
+
 let activeEffect
 
 const cleanupEffect = (effect) => {
@@ -6,14 +8,20 @@ const cleanupEffect = (effect) => {
   })
 }
 
+export declare interface EffectOptions {
+  scheduler?: Function
+  onStop?: () => void
+}
+
 class ReactiveEffect {
   private _fn: any
 
+  active = true
   deps: Set<any>[] = []
+  onStop: EffectOptions['onStop']
 
-  constructor(fn, public scheduler?) {
+  constructor(fn) {
     this._fn = fn
-    this.scheduler = scheduler
   }
 
   run() {
@@ -22,18 +30,17 @@ class ReactiveEffect {
   }
 
   stop() {
+    if (!this.active)
+      return
     cleanupEffect(this)
+    this.active = false
+    this.onStop?.()
   }
 }
 
-export declare interface EffectOptions {
-  scheduler: Function
-}
-
 export const effect = (fn, options?: EffectOptions) => {
-  const { scheduler } = options ?? {}
-
-  const _effect = new ReactiveEffect(fn, scheduler)
+  const _effect = new ReactiveEffect(fn)
+  extend(_effect, options)
 
   _effect.run()
 

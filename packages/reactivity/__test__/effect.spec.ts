@@ -77,4 +77,16 @@ describe('effect', () => {
     runner()
     expect(dummy).toBe(2)
   })
+
+  it('onStop', () => {
+    const onStop = vi.fn()
+
+    const runner = effect(
+      () => { },
+      { onStop },
+    )
+
+    stop(runner)
+    expect(onStop).toHaveBeenCalledOnce()
+  })
 })
