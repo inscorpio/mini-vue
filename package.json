@@ -2,13 +2,12 @@
   "name": "mini-vue",
   "version": "0.0.1",
   "description": "learn vue3",
+  "author": "Linyx",
+  "license": "MIT",
   "main": "index.js",
   "scripts": {
     "test": "vitest"
   },
-  "keywords": [],
-  "author": "Linyx",
-  "license": "MIT",
   "devDependencies": {
     "@antfu/eslint-config": "^0.29.3",
     "eslint": "^8.26.0",
