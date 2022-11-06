@@ -1,4 +1,4 @@
-import { effect, reactive } from '@mini-vue/reactivity'
+import { effect, reactive, stop } from '@mini-vue/reactivity'
 
 describe('effect', () => {
   it('happy path', () => {
@@ -18,7 +18,7 @@ describe('effect', () => {
     expect(nextAge).toBe(12)
   })
 
-  it('should return runner when call effect', () => {
+  it('runner', () => {
     let foo = 10
 
     const runner = effect(() => {
@@ -57,6 +57,24 @@ describe('effect', () => {
     expect(dummy).toBe(1)
 
     run()
+    expect(dummy).toBe(2)
+  })
+
+  it('stop', () => {
+    let dummy
+    const obj = reactive({ foo: 1 })
+
+    const runner = effect(() => {
+      dummy = obj.foo
+    })
+
+    expect(dummy).toBe(1)
+
+    stop(runner)
+    obj.foo = 2
+    expect(dummy).toBe(1)
+
+    runner()
     expect(dummy).toBe(2)
   })
 })

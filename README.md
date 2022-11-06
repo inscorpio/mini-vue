@@ -25,3 +25,5 @@
   - this
 
 - scheduler
+
+- stop
