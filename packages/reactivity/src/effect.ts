@@ -1,5 +1,11 @@
 let activeEffect
 
+const cleanupEffect = (effect) => {
+  effect.deps.forEach((deps) => {
+    deps.delete(effect)
+  })
+}
+
 class ReactiveEffect {
   private _fn: any
 
@@ -16,9 +22,7 @@ class ReactiveEffect {
   }
 
   stop() {
-    this.deps.forEach((deps) => {
-      deps.delete(this)
-    })
+    cleanupEffect(this)
   }
 }
 
