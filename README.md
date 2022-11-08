@@ -27,3 +27,6 @@
 - scheduler
 
 - stop
+- onStop
+
+- readonly
