@@ -1,4 +1,4 @@
-import { readonly } from '../src'
+import { isReadonly, readonly } from '../src'
 
 describe('readonly', () => {
   it('happy path', () => {
@@ -16,5 +16,13 @@ describe('readonly', () => {
 
     wrapped.foo = 2
     expect(console.warn).toHaveBeenCalled()
+  })
+
+  it('isReadonly', () => {
+    const original = { foo: 1 }
+    const wrapped = readonly(original)
+
+    expect(isReadonly(original)).toBe(false)
+    expect(isReadonly(wrapped)).toBe(true)
   })
 })
