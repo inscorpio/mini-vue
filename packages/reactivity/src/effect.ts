@@ -4,8 +4,8 @@ let activeFn: EffectFn
 
 export function effect(fn: EffectFn) {
   activeFn = fn
-  const res = fn()
-  return res
+  fn()
+  return fn
 }
 
 const targetMap = new Map<object, Map<unknown, Set<EffectFn>>>()
