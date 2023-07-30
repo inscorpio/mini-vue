@@ -85,6 +85,6 @@ export function trigger(target: object, key: unknown) {
   })
 }
 
-export function stop(runner) {
+export function stop(runner: ReactiveEffect['fn']) {
   runner.stop()
 }
