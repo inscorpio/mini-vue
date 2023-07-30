@@ -1,5 +1,6 @@
 type EffectFn = () => void
 type EffectScheduler = () => void
+type EffectSet = Set<ReactiveEffect>
 interface EffectOptions {
   scheduler?: EffectScheduler
 }
@@ -8,8 +9,9 @@ interface EffectOptions {
 // 1. 为什么取名为 ReactiveEffect
 // 2. 为什么要封装成 class? 是源码中有多次使用吗？
 interface ReactiveEffect {
-  fn: EffectFn
+  fn: EffectFn & { stop?: () => void }
   scheduler?: EffectScheduler
+  effects: EffectSet[]
 }
 
 let activeEffect: ReactiveEffect
@@ -24,14 +26,22 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
   activeEffect = {
     fn,
     scheduler,
+    effects: [],
   }
 
+  // 这里涉及到函数添加静态属性，其实可以考虑将 activeEffect 封装为一个 class 了
+  activeEffect.fn.stop = () => {
+    activeEffect.effects.forEach((effectSet) => {
+      if (effectSet.has(activeEffect))
+        effectSet.delete(activeEffect)
+    })
+  }
   activeEffect.fn()
 
-  return fn
+  return activeEffect.fn
 }
 
-const targetMap = new Map<object, Map<unknown, Set<ReactiveEffect>>>()
+const targetMap = new Map<object, Map<unknown, EffectSet>>()
 
 // 收集函数(fn)
 // 一个 key 有多个 fn 且不会重复，所以使用 Set 的数据结构
@@ -50,8 +60,14 @@ export function track(target: object, key: unknown) {
     keyMap.set(key, effectSet)
   }
 
+  // 如果只是单纯的访问 reactive 中的属性时，没有调用 effect 就不会有 activeEffect
+  if (!activeEffect)
+    return
+
   // 最开始只是为了收集 fn, 如果这里添加的是 activeEffect, 那么叫 fnSet 就不合适了
   effectSet.add(activeEffect)
+
+  activeEffect.effects.push(effectSet)
 }
 
 // 触发函数(fn)
@@ -67,4 +83,8 @@ export function trigger(target: object, key: unknown) {
       ? effect.scheduler()
       : effect.fn()
   })
+}
+
+export function stop(runner) {
+  runner.stop()
 }

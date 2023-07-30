@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { reactive } from '../src/reactive'
-import { effect } from '../src/effect'
+import { effect, stop } from '../src/effect'
 
 describe('effect', () => {
   it('happy path', () => {
@@ -49,5 +49,29 @@ describe('effect', () => {
     observed.foo = 1
     expect(dummy).toBe(0)
     expect(scheduler).toBeCalledTimes(1)
+  })
+
+  // Question:
+  // 1. 在源码中 哪里使用到了 stop 这个功能?
+
+  // 1. 调用 stop , 再次更新时不会触发 fn 执行
+  // 2. 再次调用 runner 时可以更新
+  it('stop', () => {
+    let dummy
+    const observed = reactive({ foo: 0 })
+    const runner = effect(
+      () => {
+        dummy = observed.foo
+      },
+    )
+
+    expect(dummy).toBe(0)
+    stop(runner)
+
+    observed.foo = 1
+    expect(dummy).toBe(0)
+
+    runner()
+    expect(dummy).toBe(1)
   })
 })
