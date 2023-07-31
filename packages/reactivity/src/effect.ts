@@ -3,6 +3,7 @@ type EffectScheduler = () => void
 type EffectSet = Set<ReactiveEffect>
 interface EffectOptions {
   scheduler?: EffectScheduler
+  onStop?: () => void
 }
 // 这个类型也不知道取什么名字，根据源码看，这里其实需要封装一个 ReactiveEffect 的类
 // Question:
@@ -12,12 +13,13 @@ interface ReactiveEffect {
   fn: EffectFn & { stop?: () => void }
   scheduler?: EffectScheduler
   effects: EffectSet[]
+  onStop?: () => void
 }
 
 let activeEffect: ReactiveEffect
 
 export function effect(fn: EffectFn, options?: EffectOptions) {
-  const { scheduler } = options ?? {}
+  const { scheduler, onStop } = options ?? {}
   // 暂时不知道给这个对象取什么名字, 但是根据源码来看，它还是一个 _effect
 
   // Question:
@@ -27,6 +29,7 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
     fn,
     scheduler,
     effects: [],
+    onStop,
   }
 
   // 这里涉及到函数添加静态属性，其实可以考虑将 activeEffect 封装为一个 class 了
@@ -35,6 +38,7 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
       if (effectSet.has(activeEffect))
         effectSet.delete(activeEffect)
     })
+    activeEffect.onStop?.()
   }
   activeEffect.fn()
 

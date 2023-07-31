@@ -74,4 +74,16 @@ describe('effect', () => {
     runner()
     expect(dummy).toBe(1)
   })
+
+  // 1. 调用 stop 后触发 onStop
+  it('onStop', () => {
+    const onStop = vi.fn()
+    const runner = effect(
+      () => {},
+      { onStop },
+    )
+
+    stop(runner)
+    expect(onStop).toHaveBeenCalled()
+  })
 })
