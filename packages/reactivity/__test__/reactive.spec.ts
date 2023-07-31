@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { reactive } from '../src/reactive'
+import { isReactive, reactive } from '../src/reactive'
 
 describe('reactive', () => {
   it('happy path', () => {
@@ -8,5 +8,13 @@ describe('reactive', () => {
 
     expect(original).not.toBe(observed)
     expect(observed.foo).toBe(0)
+  })
+
+  it('isReactive', () => {
+    const original = { foo: 0 }
+    const observed = reactive(original)
+
+    expect(isReactive(original)).toBe(false)
+    expect(isReactive(observed)).toBe(true)
   })
 })

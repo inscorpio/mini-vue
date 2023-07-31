@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { readonly } from '../src/reactive'
+import { isReadonly, readonly } from '../src/reactive'
 
 describe('readonly', () => {
   // 1. 只读对象，不能修改属性
@@ -12,5 +12,13 @@ describe('readonly', () => {
     observed.foo = 1
     expect(observed.foo).toBe(0)
     expect(console.warn).toHaveBeenCalledWith(`Set operation on key "foo" failed: ${observed} is readonly.`)
+  })
+
+  it('isReadonly', () => {
+    const original = { foo: 0 }
+    const observed = readonly(original)
+
+    expect(isReadonly(original)).toBe(false)
+    expect(isReadonly(observed)).toBe(true)
   })
 })
