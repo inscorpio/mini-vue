@@ -35,8 +35,8 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
   // 这里涉及到函数添加静态属性，其实可以考虑将 activeEffect 封装为一个 class 了
   activeEffect.fn.stop = () => {
     activeEffect.effects.forEach((effectSet) => {
-      if (effectSet.has(activeEffect))
-        effectSet.delete(activeEffect)
+      // fix:  activeEffect 一定在 effectSet 内 ， 所以不需要判断
+      effectSet.delete(activeEffect)
     })
     activeEffect.onStop?.()
   }
