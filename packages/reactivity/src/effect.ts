@@ -18,6 +18,7 @@ interface ReactiveEffect {
 }
 
 let activeEffect: ReactiveEffect
+let shouldTrack = true
 
 export function effect(fn: EffectFn, options?: EffectOptions) {
   const { scheduler, onStop } = options ?? {}
@@ -35,6 +36,7 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
 
   // 这里涉及到函数添加静态属性，其实可以考虑将 activeEffect 封装为一个 class 了
   activeEffect.fn.stop = () => {
+    shouldTrack = false
     activeEffect.deps.forEach((dep) => {
       // fix:  activeEffect 一定在 dep 内 ， 所以不需要判断
       dep.delete(activeEffect)
@@ -51,6 +53,13 @@ const targetMap = new Map<object, Map<unknown, Dep>>()
 // 收集函数(fn)
 // 一个 key 有多个 fn 且不会重复，所以使用 Set 的数据结构
 export function track(target: object, key: unknown) {
+  // 如果只是单纯的访问 reactive 中的属性时，没有调用 effect 就不会有 activeEffect
+  if (!activeEffect)
+    return
+  // 当调用 stop 后就应该停止收集
+  if (!shouldTrack)
+    return
+
   let depsMap = targetMap.get(target)
 
   if (!depsMap) {
@@ -65,10 +74,9 @@ export function track(target: object, key: unknown) {
     depsMap.set(key, dep)
   }
 
-  // 如果只是单纯的访问 reactive 中的属性时，没有调用 effect 就不会有 activeEffect
-  if (!activeEffect)
+  // perf: 如果有该 effect 就不添加了
+  if (dep.has(activeEffect))
     return
-
   // 最开始只是为了收集 fn, 如果这里添加的是 activeEffect, 那么叫 fnSet 就不合适了
   dep.add(activeEffect)
 

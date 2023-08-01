@@ -68,7 +68,10 @@ describe('effect', () => {
     expect(dummy).toBe(0)
     stop(runner)
 
-    observed.foo = 1
+    // observed.foo = 1
+    // observed.foo++ -> observed.foo = observed.foo + 1
+    // 如果是这种形式的话，触发 trigger 之前 会先触发 track，又进行了一次依赖收集，那么调用 stop 时就白清空了，所以需要一个状态控制什么时候应该收集
+    observed.foo++
     expect(dummy).toBe(0)
 
     runner()
