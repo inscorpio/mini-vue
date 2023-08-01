@@ -1,6 +1,7 @@
 type EffectFn = () => void
 type EffectScheduler = () => void
-type EffectSet = Set<ReactiveEffect>
+// 现在终于搞懂了 Dep 就是 new ReactiveEffect() 的集合，所以下面全部得改一下命名
+type Dep = Set<ReactiveEffect>
 interface EffectOptions {
   scheduler?: EffectScheduler
   onStop?: () => void
@@ -12,7 +13,7 @@ interface EffectOptions {
 interface ReactiveEffect {
   fn: EffectFn & { stop?: () => void }
   scheduler?: EffectScheduler
-  effects: EffectSet[]
+  deps: Dep[]
   onStop?: () => void
 }
 
@@ -28,15 +29,15 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
   activeEffect = {
     fn,
     scheduler,
-    effects: [],
+    deps: [],
     onStop,
   }
 
   // 这里涉及到函数添加静态属性，其实可以考虑将 activeEffect 封装为一个 class 了
   activeEffect.fn.stop = () => {
-    activeEffect.effects.forEach((effectSet) => {
-      // fix:  activeEffect 一定在 effectSet 内 ， 所以不需要判断
-      effectSet.delete(activeEffect)
+    activeEffect.deps.forEach((dep) => {
+      // fix:  activeEffect 一定在 dep 内 ， 所以不需要判断
+      dep.delete(activeEffect)
     })
     activeEffect.onStop?.()
   }
@@ -45,23 +46,23 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
   return activeEffect.fn
 }
 
-const targetMap = new Map<object, Map<unknown, EffectSet>>()
+const targetMap = new Map<object, Map<unknown, Dep>>()
 
 // 收集函数(fn)
 // 一个 key 有多个 fn 且不会重复，所以使用 Set 的数据结构
 export function track(target: object, key: unknown) {
-  let keyMap = targetMap.get(target)
+  let depsMap = targetMap.get(target)
 
-  if (!keyMap) {
-    keyMap = new Map()
-    targetMap.set(target, keyMap)
+  if (!depsMap) {
+    depsMap = new Map()
+    targetMap.set(target, depsMap)
   }
 
-  let effectSet = keyMap.get(key)
+  let dep = depsMap.get(key)
 
-  if (!effectSet) {
-    effectSet = new Set()
-    keyMap.set(key, effectSet)
+  if (!dep) {
+    dep = new Set()
+    depsMap.set(key, dep)
   }
 
   // 如果只是单纯的访问 reactive 中的属性时，没有调用 effect 就不会有 activeEffect
@@ -69,19 +70,19 @@ export function track(target: object, key: unknown) {
     return
 
   // 最开始只是为了收集 fn, 如果这里添加的是 activeEffect, 那么叫 fnSet 就不合适了
-  effectSet.add(activeEffect)
+  dep.add(activeEffect)
 
-  activeEffect.effects.push(effectSet)
+  activeEffect.deps.push(dep)
 }
 
 // 触发函数(fn)
 export function trigger(target: object, key: unknown) {
-  // targetMap -> keyMap -> effectSet
+  // targetMap -> depsMap -> effect.fn
 
-  const keyMap = targetMap.get(target)
-  const effectSet = keyMap.get(key)
+  const depsMap = targetMap.get(target)
+  const dep = depsMap.get(key)
 
-  effectSet.forEach((effect) => {
+  dep.forEach((effect) => {
     // 一开始只是为了执行 effectFn, 但是现在还需要执行 scheduler, 那收集依赖的时候除了收集 effectFn 之外，就还需要收集对应的 scheduler, 所以 在 track 中应该做出改变
     effect.scheduler
       ? effect.scheduler()
