@@ -1,0 +1,5 @@
+{
+  "name": "@mini-vue/shared",
+  "type": "module",
+  "main": "./src/index.ts"
+}
