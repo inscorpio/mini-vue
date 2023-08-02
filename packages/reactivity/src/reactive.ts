@@ -1,3 +1,4 @@
+import { isObject } from '@mini-vue/shared'
 import { track, trigger } from './effect'
 
 enum ReactiveFlags {
@@ -10,7 +11,10 @@ export function reactive<T extends object>(target: T) {
     get(target, key) {
       Reflect.set(target, ReactiveFlags.IS_REACTIVE, true)
       track(target, key)
-      return Reflect.get(target, key)
+      const res = Reflect.get(target, key)
+      return isObject(res)
+        ? reactive(<object>res)
+        : res
     },
     set(target, key, value) {
       Reflect.set(target, key, value)

@@ -1,0 +1,7 @@
+{
+  "name": "@mini-vue/reactivity",
+  "type": "module",
+  "dependencies": {
+    "@mini-vue/shared": "*"
+  }
+}

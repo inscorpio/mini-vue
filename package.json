@@ -1,5 +1,4 @@
 {
-  "name": "@linyx/mini-vue",
   "type": "module",
   "scripts": {
     "test": "vitest"
