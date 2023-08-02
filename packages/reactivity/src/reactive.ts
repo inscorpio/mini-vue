@@ -28,7 +28,10 @@ export function readonly<T extends object>(target: T) {
   return new Proxy(target, {
     get(target, key) {
       Reflect.set(target, ReactiveFlags.IS_READONLY, true)
-      return Reflect.get(target, key)
+      const res = Reflect.get(target, key)
+      return isObject(res)
+        ? readonly(<object>res)
+        : res
     },
     set(target, key) {
       console.warn(`Set operation on key "${String(key)}" failed: ${target} is readonly.`)
