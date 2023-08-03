@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { isReadonly, readonly, shallowReadonly } from '../src/reactive'
+import { isProxy, isReadonly, readonly, shallowReadonly } from '../src/reactive'
 
 describe('readonly', () => {
   // 1. 只读对象，不能修改属性
@@ -47,5 +47,13 @@ describe('readonly', () => {
     expect(isReadonly(observed.nested)).toBe(false)
     expect(isReadonly(observed.array)).toBe(false)
     expect(isReadonly(observed.array[0])).toBe(false)
+  })
+
+  it('isProxy', () => {
+    const original = { foo: 0 }
+    const observed = readonly(original)
+
+    expect(isProxy(original)).toBe(false)
+    expect(isProxy(observed)).toBe(true)
   })
 })
