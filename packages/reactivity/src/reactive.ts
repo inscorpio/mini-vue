@@ -1,43 +1,24 @@
-import { isObject } from '@mini-vue/shared'
-import { track, trigger } from './effect'
+import { reactiveHandlers, readonlyHandlers, shallowReactiveHandlers } from './baseHanders'
 
-enum ReactiveFlags {
+export enum ReactiveFlags {
   IS_REACTIVE = '__v_isReactive',
   IS_READONLY = '__v_isReadonly',
 }
 
+export function createReactiveObject(target, handlers) {
+  return new Proxy(target, handlers)
+}
+
 export function reactive<T extends object>(target: T) {
-  return new Proxy(target, {
-    get(target, key) {
-      Reflect.set(target, ReactiveFlags.IS_REACTIVE, true)
-      track(target, key)
-      const res = Reflect.get(target, key)
-      return isObject(res)
-        ? reactive(<object>res)
-        : res
-    },
-    set(target, key, value) {
-      Reflect.set(target, key, value)
-      trigger(target, key)
-      return true
-    },
-  })
+  return createReactiveObject(target, reactiveHandlers)
 }
 
 export function readonly<T extends object>(target: T) {
-  return new Proxy(target, {
-    get(target, key) {
-      Reflect.set(target, ReactiveFlags.IS_READONLY, true)
-      const res = Reflect.get(target, key)
-      return isObject(res)
-        ? readonly(<object>res)
-        : res
-    },
-    set(target, key) {
-      console.warn(`Set operation on key "${String(key)}" failed: ${target} is readonly.`)
-      return true
-    },
-  })
+  return createReactiveObject(target, readonlyHandlers)
+}
+
+export function shallowReadonly<T extends object>(target: T) {
+  return createReactiveObject(target, shallowReactiveHandlers)
 }
 
 export function isReactive(value: unknown) {

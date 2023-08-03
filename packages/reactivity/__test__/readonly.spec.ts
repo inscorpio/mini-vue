@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest'
-import { isReadonly, readonly } from '../src/reactive'
+import { isReadonly, readonly, shallowReadonly } from '../src/reactive'
 
 describe('readonly', () => {
   // 1. 只读对象，不能修改属性
@@ -33,5 +33,19 @@ describe('readonly', () => {
     expect(isReadonly(observed.nested)).toBe(true)
     expect(isReadonly(observed.array)).toBe(true)
     expect(isReadonly(observed.array[0])).toBe(true)
+  })
+
+  // 只有第一层是只读的
+  it('shallow readonly', () => {
+    const original = {
+      nested: {
+        foo: 1,
+      },
+      array: [{ bar: 2 }],
+    }
+    const observed = shallowReadonly(original)
+    expect(isReadonly(observed.nested)).toBe(false)
+    expect(isReadonly(observed.array)).toBe(false)
+    expect(isReadonly(observed.array[0])).toBe(false)
   })
 })
