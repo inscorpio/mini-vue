@@ -4,7 +4,7 @@ export enum ReactiveFlags {
   IS_REACTIVE = '__v_isReactive',
   IS_READONLY = '__v_isReadonly',
 }
-
+// 为什么不叫 createProxyObject 呢？
 export function createReactiveObject(target, handlers) {
   return new Proxy(target, handlers)
 }
