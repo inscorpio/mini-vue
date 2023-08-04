@@ -1,7 +1,7 @@
 type EffectFn = () => void
 type EffectScheduler = () => void
 // 现在终于搞懂了 Dep 就是 new ReactiveEffect() 的集合，所以下面全部得改一下命名
-type Dep = Set<ReactiveEffect>
+export type Dep = Set<ReactiveEffect>
 interface EffectOptions {
   scheduler?: EffectScheduler
   onStop?: () => void
@@ -10,7 +10,7 @@ interface EffectOptions {
 // Question:
 // 1. 为什么取名为 ReactiveEffect
 // 2. 为什么要封装成 class? 是源码中有多次使用吗？
-interface ReactiveEffect {
+export interface ReactiveEffect {
   fn: EffectFn & { stop?: () => void }
   scheduler?: EffectScheduler
   deps: Dep[]
@@ -50,14 +50,15 @@ export function effect(fn: EffectFn, options?: EffectOptions) {
 
 const targetMap = new Map<object, Map<unknown, Dep>>()
 
+export function isTracking() {
+  // 如果只是单纯的访问 reactive 中的属性时，没有调用 effect 就不会有 activeEffect
+  return activeEffect && shouldTrack
+}
+
 // 收集函数(fn)
 // 一个 key 有多个 fn 且不会重复，所以使用 Set 的数据结构
 export function track(target: object, key: unknown) {
-  // 如果只是单纯的访问 reactive 中的属性时，没有调用 effect 就不会有 activeEffect
-  if (!activeEffect)
-    return
-  // 当调用 stop 后就应该停止收集
-  if (!shouldTrack)
+  if (!isTracking())
     return
 
   let depsMap = targetMap.get(target)
@@ -74,6 +75,12 @@ export function track(target: object, key: unknown) {
     depsMap.set(key, dep)
   }
 
+  trackEffects(dep)
+}
+
+// ref 和 reactive 共有的逻辑
+//  为什么不叫 trackDep 呢
+export function trackEffects(dep: Dep) {
   // perf: 如果有该 effect 就不添加了
   if (dep.has(activeEffect))
     return
@@ -90,6 +97,12 @@ export function trigger(target: object, key: unknown) {
   const depsMap = targetMap.get(target)
   const dep = depsMap.get(key)
 
+  triggerEffects(dep)
+}
+
+// ref 和 reactive 共有的逻辑
+//  为什么不叫 triggerDep 呢
+export function triggerEffects(dep: Dep) {
   dep.forEach((effect) => {
     // 一开始只是为了执行 effectFn, 但是现在还需要执行 scheduler, 那收集依赖的时候除了收集 effectFn 之外，就还需要收集对应的 scheduler, 所以 在 track 中应该做出改变
     effect.scheduler
