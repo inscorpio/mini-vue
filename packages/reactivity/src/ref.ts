@@ -51,3 +51,21 @@ export function unref<T>(ref: MaybeRef<T>): T {
     ? ref.value
     : ref
 }
+
+export function proxyRefs(objectWithRefs) {
+  return new Proxy(objectWithRefs, {
+    get(target, key) {
+      return unref(Reflect.get(target, key))
+    },
+
+    set(target, key, value) {
+      const oldValue = Reflect.get(target, key)
+      const handleRef = isRef(oldValue) && !isRef(value)
+      handleRef
+        ? Reflect.set(oldValue, 'value', value)
+        : Reflect.set(target, key, value)
+
+      return true
+    },
+  })
+}

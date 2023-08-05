@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { effect } from '../src/effect'
-import { isRef, ref, unref } from '../src/ref'
+import { isRef, proxyRefs, ref, unref } from '../src/ref'
 
 describe('ref', () => {
   // 将传入的值通过 .value 的形式访问
@@ -64,5 +64,33 @@ describe('ref', () => {
   it('unref', () => {
     expect(unref(1)).toBe(1)
     expect(unref(ref(1))).toBe(1)
+  })
+
+  it('proxyRefs', () => {
+    const original: any = {
+      foo: ref(0),
+      bar: 0,
+    }
+    const observed = proxyRefs(original)
+
+    expect(original.foo.value).toBe(0)
+    expect(observed.foo).toBe(0)
+    expect(observed.bar).toBe(0)
+
+    // update
+    observed.foo = 1
+    expect(original.foo.value).toBe(1)
+    expect(observed.foo).toBe(1)
+
+    observed.bar = 1
+    expect(observed.bar).toBe(1)
+
+    observed.foo = ref(2)
+    expect(original.foo.value).toBe(2)
+    expect(observed.foo).toBe(2)
+
+    observed.bar = ref(2)
+    expect(original.bar.value).toBe(2)
+    expect(observed.bar).toBe(2)
   })
 })
