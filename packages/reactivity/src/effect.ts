@@ -1,51 +1,58 @@
-type EffectFn = () => void
-type EffectScheduler = () => void
+import { extend } from '@mini-vue/shared'
+
 // 现在终于搞懂了 Dep 就是 new ReactiveEffect() 的集合，所以下面全部得改一下命名
 export type Dep = Set<ReactiveEffect>
-interface EffectOptions {
-  scheduler?: EffectScheduler
-  onStop?: () => void
-}
-// 这个类型也不知道取什么名字，根据源码看，这里其实需要封装一个 ReactiveEffect 的类
-// Question:
-// 1. 为什么取名为 ReactiveEffect
-// 2. 为什么要封装成 class? 是源码中有多次使用吗？
-export interface ReactiveEffect {
-  fn: EffectFn & { stop?: () => void }
-  scheduler?: EffectScheduler
-  deps: Dep[]
+interface ReactiveEffectOptions {
+  scheduler?: () => void
   onStop?: () => void
 }
 
 let activeEffect: ReactiveEffect
 let shouldTrack = true
 
-export function effect(fn: EffectFn, options?: EffectOptions) {
-  const { scheduler, onStop } = options ?? {}
-  // 暂时不知道给这个对象取什么名字, 但是根据源码来看，它还是一个 _effect
+// 其实不是很懂封装这个类的技巧
+export class ReactiveEffect {
+  public fn
+  public scheduler
+  public deps = []
+  public onStop
+  // 缺少 active 属性，但是单测没报错
 
+  constructor(fn, scheduler?) {
+    this.fn = fn
+    this.scheduler = scheduler
+  }
+
+  run() {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
+    activeEffect = this
+    return this.fn()
+  }
+
+  stop() {
+    shouldTrack = false
+    cleanupEffect(this)
+    this.onStop?.()
+  }
+}
+
+function cleanupEffect(effect) {
+  effect.deps.forEach((dep) => {
+    dep.delete(effect)
+  })
+}
+
+export function effect(fn, options?: ReactiveEffectOptions) {
   // Question:
   // 1. 为什么这里已经有一个 effect 函数了，还要给这个对象取名为 _effect
+  // 2. 课程内传传入了 scheduler 参数，但是下面 extend 还是会把 scheduler 挂在 effect 上，可以不用传吗？(没有传单测也没报错)
+  const _effect = new ReactiveEffect(fn)
+  extend(_effect, options)
 
-  activeEffect = {
-    fn,
-    scheduler,
-    deps: [],
-    onStop,
-  }
+  _effect.run()
+  fn.effect = _effect
 
-  // 这里涉及到函数添加静态属性，其实可以考虑将 activeEffect 封装为一个 class 了
-  activeEffect.fn.stop = () => {
-    shouldTrack = false
-    activeEffect.deps.forEach((dep) => {
-      // fix:  activeEffect 一定在 dep 内 ， 所以不需要判断
-      dep.delete(activeEffect)
-    })
-    activeEffect.onStop?.()
-  }
-  activeEffect.fn()
-
-  return activeEffect.fn
+  return _effect.fn
 }
 
 const targetMap = new Map<object, Map<unknown, Dep>>()
@@ -111,6 +118,7 @@ export function triggerEffects(dep: Dep) {
   })
 }
 
-export function stop(runner: ReactiveEffect['fn']) {
-  runner.stop()
+export function stop(runner) {
+  // 之前的 stop 是挂在 runner 上的，现在 runner 上挂载了 effect, 将 stop 方法移到了 effect 内部
+  runner.effect.stop()
 }
