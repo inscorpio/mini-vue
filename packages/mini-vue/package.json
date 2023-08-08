@@ -1,0 +1,8 @@
+{
+  "name": "mini-vue",
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@mini-vue/runtime-core": "*"
+  }
+}
