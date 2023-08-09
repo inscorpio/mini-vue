@@ -1,7 +1,5 @@
-export function h(tag, props, children) {
-  const el: Element = document.createElement(tag)
+import { createVNode } from './vnode'
 
-  el.innerHTML = children
-
-  return el
+export function h(type, props, children) {
+  return createVNode(type, props, children)
 }
