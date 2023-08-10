@@ -1,4 +1,4 @@
-import { extend, isObject } from '@mini-vue/shared'
+import { isObject } from '@mini-vue/shared'
 import { patch } from './renderer'
 
 export function processComponent(vnode, container) {
@@ -12,7 +12,8 @@ function mountComponent(vnode, container) {
 }
 
 function setupRenderEffect(instance, container) {
-  const subTree = instance.render()
+  const { proxy, render } = instance
+  const subTree = render.call(proxy)
   patch(subTree, container)
 }
 
@@ -24,18 +25,30 @@ function setupComponent(instance) {
 }
 
 function setupStatefulComponent(instance) {
-  const Component = instance.type
+  const { type: Component } = instance
+
   const { setup } = Component
   const setupResult = setup?.()
   handleSetupResult(instance, setupResult)
 }
 
+function createComponentInstanceProxy(instance) {
+  const { setupState } = instance
+  instance.proxy = new Proxy(
+    {},
+    {
+      get(target, key) {
+        if (key in setupState)
+          return Reflect.get(setupState, key)
+      },
+    },
+  )
+}
+
 function handleSetupResult(instance, setupResult) {
   if (isObject(setupResult)) {
     instance.setupState = setupResult
-    // 先简单实现将 setup 返回值挂载到 this(instance) 上
-    // 根据猜测是要使用 Proxy 拦截 getter, 还要实现 getCurrentInstance API
-    extend(instance, setupResult)
+    createComponentInstanceProxy(instance)
   }
   // TODO: handler render function
 
@@ -43,7 +56,7 @@ function handleSetupResult(instance, setupResult) {
 }
 
 function finishComponentSetup(instance) {
-  const Component = instance.type
+  const { type: Component } = instance
 
   instance.render = Component.render
 }
@@ -52,5 +65,8 @@ function createComponentInstance(vnode) {
   return {
     vnode,
     type: vnode.type,
+    setupState: null,
+    proxy: null,
+    render: null,
   }
 }
