@@ -17,7 +17,8 @@ function processElement(vnode, container) {
 }
 
 function mountElement(vnode, container) {
-  const el: Element = document.createElement(vnode.type)
+  // 这里的 vnode 就是 component 里面的 subTree
+  const el: Element = vnode.el = document.createElement(vnode.type)
 
   for (const key in vnode.props) {
     const value = vnode.props[key]

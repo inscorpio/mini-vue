@@ -12,9 +12,13 @@ function mountComponent(vnode, container) {
 }
 
 function setupRenderEffect(instance, container) {
-  const { proxy, render } = instance
+  const { proxy, render, vnode } = instance
   const subTree = render.call(proxy)
   patch(subTree, container)
+
+  // subTree 上的 el 是在 mountElement 的时候赋值的
+  // 等所有的 element 类型处理完成之后将 el 挂载到 vnode 上
+  vnode.el = subTree.el
 }
 
 function setupComponent(instance) {
@@ -40,6 +44,11 @@ function createComponentInstanceProxy(instance) {
       get(target, key) {
         if (key in setupState)
           return Reflect.get(setupState, key)
+        const map = {
+          $el: i => i.vnode.el,
+        }
+
+        return map[key]?.(instance)
       },
     },
   )
