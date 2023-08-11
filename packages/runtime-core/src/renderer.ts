@@ -1,4 +1,4 @@
-import { isObject } from '@mini-vue/shared'
+import { ShapeFlags } from '@mini-vue/shared/src/shapeFlags'
 import { processComponent } from './component'
 
 export function render(vnode, container) {
@@ -6,9 +6,10 @@ export function render(vnode, container) {
 }
 
 export function patch(vnode, container) {
-  if (isObject(vnode.type))
+  const { shapeFlag } = vnode
+  if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT)
     processComponent(vnode, container)
-  else if (typeof vnode.type === 'string')
+  else if (shapeFlag & ShapeFlags.ELEMENT)
     processElement(vnode, container)
 }
 
@@ -17,19 +18,18 @@ function processElement(vnode, container) {
 }
 
 function mountElement(vnode, container) {
+  const { type, props, children, shapeFlag } = vnode
   // 这里的 vnode 就是 component 里面的 subTree
-  const el: Element = vnode.el = document.createElement(vnode.type)
+  const el: Element = vnode.el = document.createElement(type)
 
-  for (const key in vnode.props) {
-    const value = vnode.props[key]
+  for (const key in props) {
+    const value = props[key]
     el.setAttribute(key, value)
   }
 
-  const { children } = vnode
-
-  if (Array.isArray(children))
+  if (shapeFlag & ShapeFlags.ARRAY_CHILDREN)
     mountChildren(children, el)
-  else
+  else if (shapeFlag & ShapeFlags.TEXT_CHILDREN)
     el.append(children)
 
   container.append(el)
