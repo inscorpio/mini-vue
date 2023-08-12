@@ -24,7 +24,12 @@ function mountElement(vnode, container) {
 
   for (const key in props) {
     const value = props[key]
-    el.setAttribute(key, value)
+    const isOn = (key: string) => /^on[A-Z]/.test(key)
+
+    if (isOn(key))
+      el.addEventListener(key.slice(2).toLowerCase(), value)
+    else
+      el.setAttribute(key, value)
   }
 
   if (shapeFlag & ShapeFlags.ARRAY_CHILDREN)

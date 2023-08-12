@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { h } from '../../lib/mini-vue.esm.js'
 
 export const App = {
@@ -7,6 +8,12 @@ export const App = {
       'div',
       {
         class: 'parent',
+        onClick() {
+          console.log('onClick')
+        },
+        onMousedown() {
+          console.log('onMousedown')
+        },
       },
       [
         h('p', { class: 'red' }, this.msg),
