@@ -51,7 +51,7 @@ export const readonlyHandlers: ProxyHandler<object> = {
 
 export const shallowReactiveHandlers: ProxyHandler<object> = extend(
   {},
-  reactiveHandlers,
+  readonlyHandlers,
   {
     get: shallowReadonlyGet,
   },

@@ -44,6 +44,11 @@ describe('readonly', () => {
       array: [{ bar: 2 }],
     }
     const observed = shallowReadonly(original)
+
+    observed.foo = 2
+    expect(console.warn).toHaveBeenCalledWith(`Set operation on key "foo" failed: ${observed} is readonly.`)
+
+    expect(isReadonly(observed)).toBe(true)
     expect(isReadonly(observed.nested)).toBe(false)
     expect(isReadonly(observed.array)).toBe(false)
     expect(isReadonly(observed.array[0])).toBe(false)
