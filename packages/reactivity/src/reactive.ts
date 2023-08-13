@@ -1,3 +1,4 @@
+import { isObject } from '@mini-vue/shared'
 import { reactiveHandlers, readonlyHandlers, shallowReactiveHandlers } from './baseHanders'
 
 export enum ReactiveFlags {
@@ -6,6 +7,8 @@ export enum ReactiveFlags {
 }
 // 为什么不叫 createProxyObject 呢？
 export function createReactiveObject(target, handlers) {
+  if (!isObject(target))
+    return console.warn(`${target} is not an object`)
   return new Proxy(target, handlers)
 }
 

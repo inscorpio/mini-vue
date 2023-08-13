@@ -1,6 +1,7 @@
 {
   "name": "@mini-vue/reactivity",
   "type": "module",
+  "main": "./src/index.ts",
   "dependencies": {
     "@mini-vue/shared": "*"
   }

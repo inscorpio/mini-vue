@@ -41,6 +41,9 @@ importers:
 
   packages/runtime-core:
     dependencies:
+      '@mini-vue/reactivity':
+        specifier: '*'
+        version: link:../reactivity
       '@mini-vue/shared':
         specifier: '*'
         version: link:../shared

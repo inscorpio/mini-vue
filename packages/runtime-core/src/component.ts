@@ -1,4 +1,5 @@
-import { isObject } from '@mini-vue/shared'
+import { hasOwn, isObject } from '@mini-vue/shared'
+import { shallowReadonly } from '@mini-vue/reactivity'
 import { patch } from './renderer'
 
 export function processComponent(vnode, container) {
@@ -23,32 +24,41 @@ function setupRenderEffect(instance, container) {
 
 function setupComponent(instance) {
   // TODO
-  // initProps()
+  initProps(instance)
   // initSlots()
   setupStatefulComponent(instance)
 }
 
+function initProps(instance) {
+  instance.props = shallowReadonly(instance.vnode.props ?? {})
+}
+
 function setupStatefulComponent(instance) {
-  const { type: Component } = instance
+  const { type: Component, props } = instance
 
   const { setup } = Component
-  const setupResult = setup?.()
+  const setupResult = setup?.(props)
   handleSetupResult(instance, setupResult)
 }
 
 function createComponentInstanceProxy(instance) {
-  const { setupState } = instance
+  const { setupState, props } = instance
   instance.proxy = new Proxy(
     {},
     {
       get(target, key) {
-        if (key in setupState)
+        if (hasOwn(setupState, key)) {
           return Reflect.get(setupState, key)
-        const map = {
-          $el: i => i.vnode.el,
         }
-
-        return map[key]?.(instance)
+        else if (hasOwn(props, key)) {
+          return Reflect.get(props, key)
+        }
+        else {
+          const map = {
+            $el: i => i.vnode.el,
+          }
+          return map[key]?.(instance)
+        }
       },
     },
   )
@@ -77,5 +87,6 @@ function createComponentInstance(vnode) {
     setupState: null,
     proxy: null,
     render: null,
+    props: null,
   }
 }
