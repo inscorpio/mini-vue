@@ -1,6 +1,7 @@
 import { hasOwn, isObject } from '@mini-vue/shared'
 import { shallowReadonly } from '@mini-vue/reactivity'
 import { patch } from './renderer'
+import { emit } from './componentEmit'
 
 export function processComponent(vnode, container) {
   mountComponent(vnode, container)
@@ -34,10 +35,13 @@ function initProps(instance) {
 }
 
 function setupStatefulComponent(instance) {
-  const { type: Component, props } = instance
+  // 我觉得现在好像没必要挂载到 instance 上，因为直接在这里就能处理，而且后续也没有使用到
+  instance.emit = emit.bind(null, instance)
 
+  const { type: Component, props } = instance
   const { setup } = Component
-  const setupResult = setup?.(props)
+  const setupResult = setup?.(props, { emit: instance.emit })
+
   handleSetupResult(instance, setupResult)
 }
 
@@ -88,5 +92,6 @@ function createComponentInstance(vnode) {
     proxy: null,
     render: null,
     props: null,
+    emit: null,
   }
 }
