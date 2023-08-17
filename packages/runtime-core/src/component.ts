@@ -1,7 +1,8 @@
-import { hasOwn, isObject } from '@mini-vue/shared'
+import { hasOwn } from '@mini-vue/shared'
 import { shallowReadonly } from '@mini-vue/reactivity'
 import { patch } from './renderer'
 import { emit } from './componentEmit'
+import { initSlots } from './componentSlots'
 
 export function processComponent(vnode, container) {
   mountComponent(vnode, container)
@@ -24,12 +25,12 @@ function setupRenderEffect(instance, container) {
 }
 
 function setupComponent(instance) {
-  // TODO
   initProps(instance)
-  // initSlots()
+  initSlots(instance)
   setupStatefulComponent(instance)
 }
 
+// TODO: 抽离到 componentSlots.ts 文件下
 function initProps(instance) {
   instance.props = shallowReadonly(instance.vnode.props ?? {})
 }
@@ -45,21 +46,23 @@ function setupStatefulComponent(instance) {
   handleSetupResult(instance, setupResult)
 }
 
+// TODO: refactor componentPublicInstanceProxy.ts
 function createComponentInstanceProxy(instance) {
   const { setupState, props } = instance
   instance.proxy = new Proxy(
     {},
     {
       get(target, key) {
-        if (hasOwn(setupState, key)) {
+        if (setupState && hasOwn(setupState, key)) {
           return Reflect.get(setupState, key)
         }
-        else if (hasOwn(props, key)) {
+        else if (props && hasOwn(props, key)) {
           return Reflect.get(props, key)
         }
         else {
           const map = {
             $el: i => i.vnode.el,
+            $slots: i => i.slots,
           }
           return map[key]?.(instance)
         }
@@ -69,10 +72,9 @@ function createComponentInstanceProxy(instance) {
 }
 
 function handleSetupResult(instance, setupResult) {
-  if (isObject(setupResult)) {
-    instance.setupState = setupResult
-    createComponentInstanceProxy(instance)
-  }
+  // 如果用户没有传 setup 并且返回 proxy 创建就有问题了，所以将 isObject 这个判断先移除
+  instance.setupState = setupResult
+  createComponentInstanceProxy(instance)
   // TODO: handler render function
 
   finishComponentSetup(instance)
@@ -93,5 +95,6 @@ function createComponentInstance(vnode) {
     render: null,
     props: null,
     emit: null,
+    slots: null,
   }
 }
