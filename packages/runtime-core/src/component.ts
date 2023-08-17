@@ -1,8 +1,8 @@
 import { hasOwn } from '@mini-vue/shared'
-import { shallowReadonly } from '@mini-vue/reactivity'
 import { patch } from './renderer'
 import { emit } from './componentEmit'
 import { initSlots } from './componentSlots'
+import { initProps } from './componentProps'
 
 export function processComponent(vnode, container) {
   mountComponent(vnode, container)
@@ -28,11 +28,6 @@ function setupComponent(instance) {
   initProps(instance)
   initSlots(instance)
   setupStatefulComponent(instance)
-}
-
-// TODO: 抽离到 componentSlots.ts 文件下
-function initProps(instance) {
-  instance.props = shallowReadonly(instance.vnode.props ?? {})
 }
 
 function setupStatefulComponent(instance) {
