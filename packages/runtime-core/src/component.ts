@@ -1,8 +1,8 @@
-import { hasOwn } from '@mini-vue/shared'
 import { patch } from './renderer'
 import { emit } from './componentEmit'
 import { initSlots } from './componentSlots'
 import { initProps } from './componentProps'
+import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 
 export function processComponent(vnode, container) {
   mountComponent(vnode, container)
@@ -35,41 +35,21 @@ function setupStatefulComponent(instance) {
   instance.emit = emit.bind(null, instance)
 
   const { type: Component, props } = instance
+
+  // Questions
+  // 1. PublicInstanceProxyHandlers 内部使用了 setupState, 为什么 instance.proxy 赋值要比 handleSetupResult 先处理？
+  // 2. 如果直接将 PublicInstanceProxyHandlers 的内容放到 handlers 参数位置 emit 测试 case 会失败？
+  //    - 间接原因是 Foo 组件 render 函数内 this 指向的是父组件（App）内传给 Foo 组件的 props, 而不是 Foo 组件实例的 instance.proxy
+  instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
+
   const { setup } = Component
   const setupResult = setup?.(props, { emit: instance.emit })
 
   handleSetupResult(instance, setupResult)
 }
 
-// TODO: refactor componentPublicInstanceProxy.ts
-function createComponentInstanceProxy(instance) {
-  const { setupState, props } = instance
-  instance.proxy = new Proxy(
-    {},
-    {
-      get(target, key) {
-        if (setupState && hasOwn(setupState, key)) {
-          return Reflect.get(setupState, key)
-        }
-        else if (props && hasOwn(props, key)) {
-          return Reflect.get(props, key)
-        }
-        else {
-          const map = {
-            $el: i => i.vnode.el,
-            $slots: i => i.slots,
-          }
-          return map[key]?.(instance)
-        }
-      },
-    },
-  )
-}
-
 function handleSetupResult(instance, setupResult) {
-  // 如果用户没有传 setup 并且返回 proxy 创建就有问题了，所以将 isObject 这个判断先移除
   instance.setupState = setupResult
-  createComponentInstanceProxy(instance)
   // TODO: handler render function
 
   finishComponentSetup(instance)
