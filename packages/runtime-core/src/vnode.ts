@@ -1,5 +1,8 @@
-import { getType } from '@mini-vue/shared'
+import { getType, isArray, isString } from '@mini-vue/shared'
 import { ShapeFlags } from '@mini-vue/shared/src/shapeFlags'
+
+export const Fragment = Symbol('Fragment')
+export const Text = Symbol('Text')
 
 export function createVNode(type, props?, children?) {
   return {
@@ -38,4 +41,13 @@ function getShapeFlag(type, children) {
   const shapeFlag = childrenMap[getType(children)]
 
   return shapeFlag
+}
+
+export function normalizeVNode(vnode) {
+  if (isString(vnode))
+    return createVNode(Text, null, vnode)
+  else if (isArray(vnode))
+    return createVNode(Fragment, null, vnode)
+  else
+    return vnode
 }

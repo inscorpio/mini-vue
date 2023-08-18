@@ -3,6 +3,7 @@ import { emit } from './componentEmit'
 import { initSlots } from './componentSlots'
 import { initProps } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
+import { normalizeVNode } from './vnode'
 
 export function processComponent(vnode, container) {
   mountComponent(vnode, container)
@@ -16,7 +17,7 @@ function mountComponent(vnode, container) {
 
 function setupRenderEffect(instance, container) {
   const { proxy, render, vnode } = instance
-  const subTree = render.call(proxy)
+  const subTree = normalizeVNode(render.call(proxy))
   patch(subTree, container)
 
   // subTree 上的 el 是在 mountElement 的时候赋值的

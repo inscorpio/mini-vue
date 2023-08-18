@@ -4,6 +4,10 @@ export const isObject = (value: unknown) => value !== null && typeof value === '
 
 export const isFunction = (value: unknown) => typeof value === 'function'
 
+export const isArray = Array.isArray
+
+export const isString = (value: unknown) => typeof value === 'string'
+
 export const extend = Object.assign
 
 export const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key)
