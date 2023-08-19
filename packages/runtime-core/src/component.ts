@@ -44,7 +44,9 @@ function setupStatefulComponent(instance) {
   instance.proxy = new Proxy({ _: instance }, PublicInstanceProxyHandlers)
 
   const { setup } = Component
+  setCurrentInstance(instance)
   const setupResult = setup?.(props, { emit: instance.emit })
+  setCurrentInstance(null)
 
   handleSetupResult(instance, setupResult)
 }
@@ -73,4 +75,14 @@ function createComponentInstance(vnode) {
     emit: null,
     slots: null,
   }
+}
+
+let currentInstance = null
+
+export function getCurrentInstance() {
+  return currentInstance
+}
+
+function setCurrentInstance(instance) {
+  currentInstance = instance
 }
