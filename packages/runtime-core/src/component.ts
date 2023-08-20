@@ -5,12 +5,12 @@ import { initProps } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 import { normalizeVNode } from './vnode'
 
-export function processComponent(vnode, container) {
-  mountComponent(vnode, container)
+export function processComponent(vnode, parent, container) {
+  mountComponent(vnode, parent, container)
 }
 
-function mountComponent(vnode, container) {
-  const instance = createComponentInstance(vnode)
+function mountComponent(vnode, parent, container) {
+  const instance = createComponentInstance(vnode, parent)
   setupComponent(instance)
   setupRenderEffect(instance, container)
 }
@@ -18,7 +18,7 @@ function mountComponent(vnode, container) {
 function setupRenderEffect(instance, container) {
   const { proxy, render, vnode } = instance
   const subTree = normalizeVNode(render.call(proxy))
-  patch(subTree, container)
+  patch(subTree, instance, container)
 
   // subTree 上的 el 是在 mountElement 的时候赋值的
   // 等所有的 element 类型处理完成之后将 el 挂载到 vnode 上
@@ -64,9 +64,10 @@ function finishComponentSetup(instance) {
   instance.render = Component.render
 }
 
-function createComponentInstance(vnode) {
+function createComponentInstance(vnode, parent) {
   return {
     vnode,
+    parent,
     type: vnode.type,
     setupState: null,
     proxy: null,
@@ -74,6 +75,8 @@ function createComponentInstance(vnode) {
     props: null,
     emit: null,
     slots: null,
+    // 这里直接以 parent.provides 为原型创建 provides, 和课程的实现方式不一样
+    provides: parent ? Object.create(parent.provides) : {},
   }
 }
 

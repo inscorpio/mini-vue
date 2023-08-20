@@ -3,23 +3,23 @@ import { processComponent } from './component'
 import { Fragment, Text, normalizeVNode } from './vnode'
 
 export function render(vnode, container) {
-  patch(vnode, container)
+  patch(vnode, null, container)
 }
 
-export function patch(vnode, container) {
+export function patch(vnode, parent, container) {
   const { type, shapeFlag } = vnode
   switch (type) {
     case Text:
       processText(vnode, container)
       break
     case Fragment:
-      processFragment(vnode, container)
+      processFragment(vnode, parent, container)
       break
     default:
       if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT)
-        processComponent(vnode, container)
+        processComponent(vnode, parent, container)
       else if (shapeFlag & ShapeFlags.ELEMENT)
-        processElement(vnode, container)
+        processElement(vnode, parent, container)
       break
   }
 }
@@ -30,15 +30,15 @@ function processText(vnode, container) {
   container.append(textNode)
 }
 
-function processFragment(vnode, container) {
-  mountChildren(vnode.children, container)
+function processFragment(vnode, parent, container) {
+  mountChildren(vnode.children, parent, container)
 }
 
-function processElement(vnode, container) {
-  mountElement(vnode, container)
+function processElement(vnode, parent, container) {
+  mountElement(vnode, parent, container)
 }
 
-function mountElement(vnode, container) {
+function mountElement(vnode, parent, container) {
   const { type, props, children, shapeFlag } = vnode
   // 这里的 vnode 就是 component 里面的 subTree
   const el: Element = vnode.el = document.createElement(type)
@@ -54,15 +54,15 @@ function mountElement(vnode, container) {
   }
 
   if (shapeFlag & ShapeFlags.ARRAY_CHILDREN)
-    mountChildren(children, el)
+    mountChildren(children, parent, el)
   else if (shapeFlag & ShapeFlags.TEXT_CHILDREN)
     el.append(children)
 
   container.append(el)
 }
 
-function mountChildren(children, container) {
+function mountChildren(children, parent, container) {
   children.forEach((child) => {
-    patch(normalizeVNode(child), container)
+    patch(normalizeVNode(child), parent, container)
   })
 }
