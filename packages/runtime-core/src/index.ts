@@ -5,3 +5,5 @@ export {
   provide,
   inject,
 } from './apiInject'
+
+export { createRenderer } from './renderer'

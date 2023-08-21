@@ -29,9 +29,9 @@ importers:
 
   packages/mini-vue:
     dependencies:
-      '@mini-vue/runtime-core':
+      '@mini-vue/runtime-dom':
         specifier: '*'
-        version: link:../runtime-core
+        version: link:../runtime-dom
 
   packages/reactivity:
     dependencies:
@@ -47,6 +47,12 @@ importers:
       '@mini-vue/shared':
         specifier: '*'
         version: link:../shared
+
+  packages/runtime-dom:
+    dependencies:
+      '@mini-vue/runtime-core':
+        specifier: '*'
+        version: link:../runtime-core
 
   packages/shared: {}
 

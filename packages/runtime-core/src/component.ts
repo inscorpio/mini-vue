@@ -1,31 +1,9 @@
-import { patch } from './renderer'
 import { emit } from './componentEmit'
 import { initSlots } from './componentSlots'
 import { initProps } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
-import { normalizeVNode } from './vnode'
 
-export function processComponent(vnode, parent, container) {
-  mountComponent(vnode, parent, container)
-}
-
-function mountComponent(vnode, parent, container) {
-  const instance = createComponentInstance(vnode, parent)
-  setupComponent(instance)
-  setupRenderEffect(instance, container)
-}
-
-function setupRenderEffect(instance, container) {
-  const { proxy, render, vnode } = instance
-  const subTree = normalizeVNode(render.call(proxy))
-  patch(subTree, instance, container)
-
-  // subTree 上的 el 是在 mountElement 的时候赋值的
-  // 等所有的 element 类型处理完成之后将 el 挂载到 vnode 上
-  vnode.el = subTree.el
-}
-
-function setupComponent(instance) {
+export function setupComponent(instance) {
   initProps(instance)
   initSlots(instance)
   setupStatefulComponent(instance)
@@ -64,7 +42,7 @@ function finishComponentSetup(instance) {
   instance.render = Component.render
 }
 
-function createComponentInstance(vnode, parent) {
+export function createComponentInstance(vnode, parent) {
   return {
     vnode,
     parent,

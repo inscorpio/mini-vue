@@ -1,8 +1,8 @@
 {
-  "name": "mini-vue",
+  "name": "@mini-vue/runtime-dom",
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
-    "@mini-vue/runtime-dom": "*"
+    "@mini-vue/runtime-core": "*"
   }
 }
