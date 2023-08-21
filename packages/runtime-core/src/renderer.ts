@@ -67,7 +67,8 @@ export function createRenderer(options) {
     // 这里的 vnode 就是 component 里面的 subTree
     const el: Element = vnode.el = createElement(type)
 
-    patchProp(props, el)
+    for (const key in props)
+      patchProp(el, key, props[key])
 
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN)
       mountChildren(children, parent, el)
