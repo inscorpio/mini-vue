@@ -1,4 +1,6 @@
 import { ShapeFlags } from '@mini-vue/shared/src/shapeFlags'
+import { proxyRefs } from '@mini-vue/reactivity'
+import { effect } from '@mini-vue/reactivity/src/effect'
 import { Fragment, Text, normalizeVNode } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
@@ -7,29 +9,30 @@ export function createRenderer(options) {
   const { createElement, patchProp, insert } = options
 
   function render(vnode, container) {
-    patch(vnode, null, container)
+    patch(null, vnode, null, container)
   }
 
-  function patch(vnode, parent, container) {
-    const { type, shapeFlag } = vnode
+  // TODO: 修改参数顺序为 n1, n2, container, parentComponentInstance
+  function patch(n1, n2, parent, container) {
+    const { type, shapeFlag } = n2
     switch (type) {
       case Text:
-        processText(vnode, container)
+        processText(n1, n2, container)
         break
       case Fragment:
-        processFragment(vnode, parent, container)
+        processFragment(n1, n2, parent, container)
         break
       default:
         if (shapeFlag & ShapeFlags.STATEFUL_COMPONENT)
-          processComponent(vnode, parent, container)
+          processComponent(n1, n2, parent, container)
         else if (shapeFlag & ShapeFlags.ELEMENT)
-          processElement(vnode, parent, container)
+          processElement(n1, n2, parent, container)
         break
     }
   }
 
-  function processComponent(vnode, parent, container) {
-    mountComponent(vnode, parent, container)
+  function processComponent(n1, n2, parent, container) {
+    mountComponent(n2, parent, container)
   }
 
   function mountComponent(vnode, parent, container) {
@@ -40,32 +43,48 @@ export function createRenderer(options) {
 
   function setupRenderEffect(instance, container) {
     const { proxy, render, vnode } = instance
-    const subTree = normalizeVNode(render.call(proxy))
-    patch(subTree, instance, container)
+    effect(() => {
+      if (!instance.isMounted) {
+        const subTree = normalizeVNode(render.call(proxyRefs(proxy)))
+        patch(null, subTree, instance, container)
 
-    // subTree 上的 el 是在 mountElement 的时候赋值的
-    // 等所有的 element 类型处理完成之后将 el 挂载到 vnode 上
-    vnode.el = subTree.el
+        // subTree 上的 el 是在 mountElement 的时候赋值的
+        // 等所有的 element 类型处理完成之后将 el 挂载到 vnode 上
+        vnode.el = subTree.el
+        instance.isMounted = true
+        instance.subTree = subTree
+      }
+      else {
+        const previousSubTree = instance.subTree
+        const subTree = normalizeVNode(render.call(proxyRefs(proxy)))
+        patch(previousSubTree, subTree, instance, container)
+
+        vnode.el = subTree.el
+        instance.subTree = subTree
+      }
+    })
   }
 
-  function processText(vnode, container) {
-    const textNode = document.createTextNode(vnode.children)
+  function processText(n1, n2, container) {
+    const textNode = document.createTextNode(n2.children)
 
     container.append(textNode)
   }
 
-  function processFragment(vnode, parent, container) {
-    mountChildren(vnode.children, parent, container)
+  function processFragment(n1, n2, parent, container) {
+    mountChildren(n2.children, parent, container)
   }
 
-  function processElement(vnode, parent, container) {
-    mountElement(vnode, parent, container)
+  function processElement(n1, n2, parent, container) {
+    !n1
+      ? mountElement(n1, n2, parent, container)
+      : patchElement(n1, n2)
   }
 
-  function mountElement(vnode, parent, container) {
-    const { type, props, children, shapeFlag } = vnode
-    // 这里的 vnode 就是 component 里面的 subTree
-    const el: Element = vnode.el = createElement(type)
+  function mountElement(n1, n2, parent, container) {
+    const { type, props, children, shapeFlag } = n2
+    // 这里的 n2 就是 component 里面的 subTree
+    const el: Element = n2.el = createElement(type)
 
     for (const key in props)
       patchProp(el, key, props[key])
@@ -80,8 +99,13 @@ export function createRenderer(options) {
 
   function mountChildren(children, parent, container) {
     children.forEach((child) => {
-      patch(normalizeVNode(child), parent, container)
+      patch(null, normalizeVNode(child), parent, container)
     })
+  }
+
+  function patchElement(n1, n2) {
+    n2.el = n1.el
+    // TODO: patchProps & patchChildren
   }
 
   return {

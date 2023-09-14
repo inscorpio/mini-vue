@@ -53,6 +53,8 @@ export function createComponentInstance(vnode, parent) {
     props: null,
     emit: null,
     slots: null,
+    isMounted: false,
+    subTree: null,
     // 这里直接以 parent.provides 为原型创建 provides, 和课程的实现方式不一样
     provides: parent ? Object.create(parent.provides) : {},
   }

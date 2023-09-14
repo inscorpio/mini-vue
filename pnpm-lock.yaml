@@ -29,6 +29,9 @@ importers:
 
   packages/mini-vue:
     dependencies:
+      '@mini-vue/reactivity':
+        specifier: '*'
+        version: link:../reactivity
       '@mini-vue/runtime-dom':
         specifier: '*'
         version: link:../runtime-dom
