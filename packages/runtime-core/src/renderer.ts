@@ -6,7 +6,8 @@ import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
 
 export function createRenderer(options) {
-  const { createElement, patchProp, insert } = options
+  // TODO: add "host" prefix
+  const { createElement, patchProp: hostPatchProp, insert } = options
 
   function render(vnode, container) {
     patch(null, vnode, null, container)
@@ -86,8 +87,10 @@ export function createRenderer(options) {
     // 这里的 n2 就是 component 里面的 subTree
     const el: Element = n2.el = createElement(type)
 
-    for (const key in props)
-      patchProp(el, key, props[key])
+    for (const key in props) {
+      if (Object.prototype.hasOwnProperty.call(props, key))
+        hostPatchProp(el, key, null, props[key])
+    }
 
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN)
       mountChildren(children, parent, el)
@@ -104,8 +107,36 @@ export function createRenderer(options) {
   }
 
   function patchElement(n1, n2) {
-    n2.el = n1.el
-    // TODO: patchProps & patchChildren
+    const el = n2.el = n1.el
+    // TODO: patchChildren
+
+    patchProps(el, n1.props, n2.props)
+  }
+
+  function patchProps(el, oldProps, newProps) {
+    if (oldProps === newProps)
+      return
+
+    updateProps()
+    removeProps()
+
+    function updateProps() {
+      for (const key in newProps) {
+        if (Object.prototype.hasOwnProperty.call(newProps, key)) {
+          if (oldProps !== newProps)
+            hostPatchProp(el, key, oldProps[key], newProps[key])
+        }
+      }
+    }
+
+    function removeProps() {
+      for (const key in oldProps) {
+        if (Object.prototype.hasOwnProperty.call(oldProps, key)) {
+          if (!(key in newProps))
+            hostPatchProp(el, key, oldProps[key], null)
+        }
+      }
+    }
   }
 
   return {

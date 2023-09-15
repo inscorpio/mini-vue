@@ -43,7 +43,7 @@ export function ref<T>(value?: T) {
 // 不是很理解这里的类型处理和函数重载
 export function isRef<T>(ref: Ref<T> | unknown): ref is Ref<T>
 export function isRef(ref: any): ref is Ref {
-  return !!ref.__v_isRef
+  return !!ref?.__v_isRef
 }
 
 export function unref<T>(ref: MaybeRef<T>): T {
