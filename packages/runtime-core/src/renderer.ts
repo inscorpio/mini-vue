@@ -6,8 +6,7 @@ import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
 
 export function createRenderer(options) {
-  // TODO: add "host" prefix
-  const { createElement, patchProp: hostPatchProp, insert } = options
+  const { createElement: hostCreateElement, patchProp: hostPatchProp, insert: hostInsert } = options
 
   function render(vnode, container) {
     patch(null, vnode, null, container)
@@ -85,7 +84,7 @@ export function createRenderer(options) {
   function mountElement(n1, n2, parent, container) {
     const { type, props, children, shapeFlag } = n2
     // 这里的 n2 就是 component 里面的 subTree
-    const el: Element = n2.el = createElement(type)
+    const el: Element = n2.el = hostCreateElement(type)
 
     for (const key in props) {
       if (Object.prototype.hasOwnProperty.call(props, key))
@@ -97,7 +96,7 @@ export function createRenderer(options) {
     else if (shapeFlag & ShapeFlags.TEXT_CHILDREN)
       el.append(children)
 
-    insert(el, container)
+    hostInsert(el, container)
   }
 
   function mountChildren(children, parent, container) {
