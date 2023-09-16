@@ -19,7 +19,15 @@ export function insert(el, container) {
   container.append(el)
 }
 
-const renderer = createRenderer({ createElement, patchProp, insert })
+export function setElementText(el, text) {
+  el.textContent = text
+}
+
+export function remove(el) {
+  el.parentNode?.removeChild(el)
+}
+
+const renderer = createRenderer({ createElement, patchProp, insert, remove, setElementText })
 
 export const createApp = renderer.createApp
 

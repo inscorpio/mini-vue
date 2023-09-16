@@ -6,7 +6,13 @@ import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
 
 export function createRenderer(options) {
-  const { createElement: hostCreateElement, patchProp: hostPatchProp, insert: hostInsert } = options
+  const {
+    createElement: hostCreateElement,
+    patchProp: hostPatchProp,
+    insert: hostInsert,
+    remove: hostRemove,
+    setElementText: hostSetElementText,
+  } = options
 
   function render(vnode, container) {
     patch(null, vnode, null, container)
@@ -78,7 +84,7 @@ export function createRenderer(options) {
   function processElement(n1, n2, parent, container) {
     !n1
       ? mountElement(n1, n2, parent, container)
-      : patchElement(n1, n2)
+      : patchElement(n1, n2, container, parent)
   }
 
   function mountElement(n1, n2, parent, container) {
@@ -94,7 +100,7 @@ export function createRenderer(options) {
     if (shapeFlag & ShapeFlags.ARRAY_CHILDREN)
       mountChildren(children, parent, el)
     else if (shapeFlag & ShapeFlags.TEXT_CHILDREN)
-      el.append(children)
+      el.textContent = children
 
     hostInsert(el, container)
   }
@@ -105,11 +111,46 @@ export function createRenderer(options) {
     })
   }
 
-  function patchElement(n1, n2) {
+  function patchElement(n1, n2, container, parentComponentInstance) {
     const el = n2.el = n1.el
-    // TODO: patchChildren
-
+    patchChildren(n1, n2, container, parentComponentInstance)
     patchProps(el, n1.props, n2.props)
+  }
+
+  function patchChildren(n1, n2, container, parentComponentInstance) {
+    const { children: c1, shapeFlag: s1 } = n1
+    const { children: c2, shapeFlag: s2 } = n2
+
+    if (s1 & ShapeFlags.TEXT_CHILDREN) {
+      // text to array
+      if (s2 & ShapeFlags.ARRAY_CHILDREN) {
+        hostSetElementText(container, null)
+        mountChildren(c2, parentComponentInstance, container)
+      }
+    }
+    else if (s1 & ShapeFlags.ARRAY_CHILDREN) {
+      // array to text
+      if (s2 & ShapeFlags.TEXT_CHILDREN)
+        // Questions:
+        // 就算不移除子节点结果也是正确的
+        unmountChildren(c1)
+
+      // TODO: array to array
+    }
+
+    // common: new children are text type
+    if (s2 & ShapeFlags.TEXT_CHILDREN) {
+      if (c1 !== c2)
+        hostSetElementText(container, c2)
+    }
+  }
+
+  function unmountChildren(children) {
+    children.forEach((child) => {
+      // Questions:
+      // 这里的 child 一定是 vnode 吗？
+      child.el && hostRemove(child.el)
+    })
   }
 
   function patchProps(el, oldProps, newProps) {
