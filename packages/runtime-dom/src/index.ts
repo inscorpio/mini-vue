@@ -15,8 +15,8 @@ export function patchProp(el, key, oldValue, newValue) {
     el.setAttribute(key, newValue)
 }
 
-export function insert(el, container) {
-  container.append(el)
+export function insert(child, parent: Element, anchor = null) {
+  parent.insertBefore(child, anchor)
 }
 
 export function setElementText(el, text) {
