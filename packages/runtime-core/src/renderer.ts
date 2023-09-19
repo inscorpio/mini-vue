@@ -147,8 +147,9 @@ export function createRenderer(options) {
 
   function patchKeyedChildren(c1, c2, container, parentComponentInstance, parentAnchor) {
     let i = 0
+    const l2 = c2.length
     let e1 = c1.length - 1
-    let e2 = c2.length - 1
+    let e2 = l2 - 1
 
     const isSameVNode = (n1, n2) => {
       return n1.type === n2.type && n1.key === n2.key
@@ -194,7 +195,7 @@ export function createRenderer(options) {
     // { i: 0, e1: -1, e2: 1 }
     if (i > e1) {
       const nextPos = e2 + 1
-      const anchor = nextPos < c2.length ? c2[nextPos].el : parentAnchor
+      const anchor = nextPos < l2 ? c2[nextPos].el : parentAnchor
       while (i <= e2) {
         patch(null, c2[i], container, parentComponentInstance, anchor)
         i++
@@ -211,7 +212,63 @@ export function createRenderer(options) {
       }
     }
 
-    // TODO: diff middle
+    // diff middle
+    // a b (d u e m) f g
+    // a b (m n U e) f g
+    else {
+      const s1 = i
+      const s2 = i
+      const keyToNewIndexMap = getKeyToNewIndexMap()
+      const toBePatched = e2 - s2 + 1
+      let patched = 0
+
+      // 遍历旧的节点
+      for (let i = s1; i <= e1; i++) {
+        const n1 = c1[i]
+
+        // perf: 如果新节点已经处理完了，依然存在旧节点，在可以直接将剩下的节点删除
+        if (patched >= toBePatched) {
+          hostRemove(n1.el)
+          continue
+        }
+
+        // 旧节点对应在新节点中的索引
+        const newIndex = findSameVNodeIndex(n1)
+        const n2 = c2[newIndex]
+
+        if (newIndex) {
+          patch(n1, n2, container, parentComponentInstance, null)
+          patched++
+        }
+        else {
+          hostRemove(n1.el)
+        }
+
+        function findSameVNodeIndex(n1) {
+          if (n1.key) {
+            return keyToNewIndexMap.get(n1.key)
+          }
+          else {
+            for (let j = s2; j <= e2; j++) {
+              if (isSameVNode(n1, c2[j])) {
+                return j
+              }
+            }
+          }
+        }
+      }
+
+      function getKeyToNewIndexMap() {
+        const keyToIndexMap = new Map()
+        if (c2[s2].key) {
+          for (let i = s2; i <= e2; i++) {
+            const n2 = c2[i]
+            keyToIndexMap.set(n2.key, i)
+          }
+        }
+        return keyToIndexMap
+      }
+    }
   }
 
   function unmountChildren(children) {
