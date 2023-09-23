@@ -212,7 +212,7 @@ export function createRenderer(options) {
       }
     }
 
-    // diff middle
+    // 5. unknown sequence
     // a b (d u e m) f g
     // a b (m n U e) f g
     else {
@@ -221,6 +221,10 @@ export function createRenderer(options) {
       const keyToNewIndexMap = getKeyToNewIndexMap()
       const toBePatched = e2 - s2 + 1
       let patched = 0
+      const newIndexToOldIndexMap = Array.from<number>({ length: toBePatched }).fill(0)
+      // 优化是否移动(不是很懂)
+      let maxNewIndexSoFar = 0
+      let moved = false
 
       // 遍历旧的节点
       for (let i = s1; i <= e1; i++) {
@@ -237,6 +241,14 @@ export function createRenderer(options) {
         const n2 = c2[newIndex]
 
         if (newIndex) {
+          // 由于 newIndexToOldIndexMap 的初始值为 0，而在这里 i 为 0 代表第一个老节点，所以将索引 +1
+          newIndexToOldIndexMap[newIndex - s2] = i + 1
+          if (newIndex >= maxNewIndexSoFar) {
+            maxNewIndexSoFar = newIndex
+          }
+          else {
+            moved = true
+          }
           patch(n1, n2, container, parentComponentInstance, null)
           patched++
         }
@@ -254,6 +266,34 @@ export function createRenderer(options) {
                 return j
               }
             }
+          }
+        }
+      }
+
+      // 5.3 move and mount
+      // 根据最长递增子序列得到不需要处理的元素索引
+      const increasingNewIndexSequence = moved
+        ? getSequence(newIndexToOldIndexMap)
+        : []
+      let j = increasingNewIndexSequence.length - 1
+
+      // 如果正序处理会出现新增多个节点时，后续节点还未插入到视图中导致 anchor 错误，所以使用倒序的方式处理，保证 anchor 始终是正确的
+      for (let i = toBePatched - 1; i >= 0; i--) {
+        // 当新节点在旧节点中在不存在时则新增
+        const newIndex = s2 + i
+        const n2 = c2[newIndex]
+        const nextPos = newIndex + 1
+        const anchor = nextPos < l2 ? c2[nextPos].el : null
+        if (newIndexToOldIndexMap[i] === 0) {
+          patch(null, n2, container, parentComponentInstance, anchor)
+        }
+        else if (moved) {
+          // 如果当前元素不需要处理，就对比下一个
+          if (i === increasingNewIndexSequence[j]) {
+            j--
+          }
+          else {
+            hostInsert(n2.el, container, anchor)
           }
         }
       }
@@ -308,4 +348,47 @@ export function createRenderer(options) {
   return {
     createApp: createAppAPI(render),
   }
+}
+
+// https://en.wikipedia.org/wiki/Longest_increasing_subsequence
+function getSequence(arr: number[]): number[] {
+  const p = arr.slice()
+  const result = [0]
+  let i, j, u, v, c
+  const len = arr.length
+  for (i = 0; i < len; i++) {
+    const arrI = arr[i]
+    if (arrI !== 0) {
+      j = result[result.length - 1]
+      if (arr[j] < arrI) {
+        p[i] = j
+        result.push(i)
+        continue
+      }
+      u = 0
+      v = result.length - 1
+      while (u < v) {
+        c = (u + v) >> 1
+        if (arr[result[c]] < arrI) {
+          u = c + 1
+        }
+        else {
+          v = c
+        }
+      }
+      if (arrI < arr[result[u]]) {
+        if (u > 0) {
+          p[i] = result[u - 1]
+        }
+        result[u] = i
+      }
+    }
+  }
+  u = result.length
+  v = result[u - 1]
+  while (u-- > 0) {
+    result[u] = v
+    v = p[v]
+  }
+  return result
 }
