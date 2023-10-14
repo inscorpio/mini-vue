@@ -1,10 +1,11 @@
+import { shallowReadonly } from '@mini-vue/reactivity'
 import { emit } from './componentEmit'
 import { initSlots } from './componentSlots'
 import { initProps } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 
 export function setupComponent(instance) {
-  initProps(instance)
+  initProps(instance, instance.vnode.props)
   initSlots(instance)
   setupStatefulComponent(instance)
 }
@@ -23,7 +24,7 @@ function setupStatefulComponent(instance) {
 
   const { setup } = Component
   setCurrentInstance(instance)
-  const setupResult = setup?.(props, { emit: instance.emit })
+  const setupResult = setup?.(shallowReadonly(props), { emit: instance.emit })
   setCurrentInstance(null)
 
   handleSetupResult(instance, setupResult)
@@ -53,7 +54,7 @@ export function createComponentInstance(vnode, parent) {
     props: null,
     emit: null,
     slots: null,
-    isMounted: false,
+    update: null,
     subTree: null,
     // 这里直接以 parent.provides 为原型创建 provides, 和课程的实现方式不一样
     provides: parent ? Object.create(parent.provides) : {},

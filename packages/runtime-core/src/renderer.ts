@@ -4,6 +4,7 @@ import { effect } from '@mini-vue/reactivity/src/effect'
 import { Fragment, Text, normalizeVNode } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
+import { shouldUpdateComponent } from './componentUpdateUtils'
 
 export function createRenderer(options) {
   const {
@@ -37,36 +38,33 @@ export function createRenderer(options) {
   }
 
   function processComponent(n1, n2, container, parentComponentInstance, anchor) {
-    mountComponent(n2, container, parentComponentInstance, anchor)
+    !n1
+      ? mountComponent(n2, container, parentComponentInstance, anchor)
+      : updateComponent(n1, n2)
+  }
+
+  // 实现方式与课程不一致，但是效果正确
+  // 都没有使用 updateComponentPreRender 方法，instance.next 等
+  function updateComponent(n1, n2) {
+    const instance = n2.component = n1.component
+    n2.el = n1.el
+    instance.props = n2.props
+    shouldUpdateComponent(n1.props, n2.props) && instance.update()
   }
 
   function mountComponent(vnode, container, parentComponentInstance, anchor) {
-    const instance = createComponentInstance(vnode, parentComponentInstance)
+    const instance = vnode.component = createComponentInstance(vnode, parentComponentInstance)
     setupComponent(instance)
     setupRenderEffect(instance, container, anchor)
   }
 
   function setupRenderEffect(instance, container, anchor) {
-    const { proxy, render, vnode } = instance
-    effect(() => {
-      if (!instance.isMounted) {
-        const subTree = normalizeVNode(render.call(proxyRefs(proxy)))
-        patch(null, subTree, container, instance, anchor)
-
-        // subTree 上的 el 是在 mountElement 的时候赋值的
-        // 等所有的 element 类型处理完成之后将 el 挂载到 vnode 上
-        vnode.el = subTree.el
-        instance.isMounted = true
-        instance.subTree = subTree
-      }
-      else {
-        const previousSubTree = instance.subTree
-        const subTree = normalizeVNode(render.call(proxyRefs(proxy)))
-        patch(previousSubTree, subTree, container, instance, anchor)
-
-        vnode.el = subTree.el
-        instance.subTree = subTree
-      }
+    instance.update = effect(() => {
+      const { proxy, render, vnode, subTree: oldSubTree } = instance
+      const newSubTree = normalizeVNode(render.call(proxyRefs(proxy)))
+      patch(oldSubTree, newSubTree, container, instance, anchor)
+      vnode.el = newSubTree.el
+      instance.subTree = newSubTree
     })
   }
 

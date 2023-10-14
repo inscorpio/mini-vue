@@ -13,6 +13,7 @@ export const PublicInstanceProxyHandlers = {
       const map = {
         $el: i => i.vnode.el,
         $slots: i => i.slots,
+        $props: i => i.props,
       }
       return map[key]?.(instance)
     }
