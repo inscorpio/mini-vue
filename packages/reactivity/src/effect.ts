@@ -24,9 +24,12 @@ export class ReactiveEffect {
   }
 
   run() {
+    shouldTrack = true
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     activeEffect = this
-    return this.fn()
+    const runner = this.fn()
+    shouldTrack = false
+    return runner
   }
 
   stop() {
