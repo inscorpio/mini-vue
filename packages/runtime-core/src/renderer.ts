@@ -5,6 +5,7 @@ import { Fragment, Text, normalizeVNode } from './vnode'
 import { createComponentInstance, setupComponent } from './component'
 import { createAppAPI } from './createApp'
 import { shouldUpdateComponent } from './componentUpdateUtils'
+import { queueJob } from './scheduler'
 
 export function createRenderer(options) {
   const {
@@ -59,13 +60,22 @@ export function createRenderer(options) {
   }
 
   function setupRenderEffect(instance, container, anchor) {
-    instance.update = effect(() => {
-      const { proxy, render, vnode, subTree: oldSubTree } = instance
-      const newSubTree = normalizeVNode(render.call(proxyRefs(proxy)))
-      patch(oldSubTree, newSubTree, container, instance, anchor)
-      vnode.el = newSubTree.el
-      instance.subTree = newSubTree
-    })
+    instance.update = effect(
+      () => {
+        // console.log(`update component: ${instance.type.name}`)
+        const { proxy, render, vnode, subTree: oldSubTree } = instance
+        const newSubTree = normalizeVNode(render.call(proxyRefs(proxy)))
+        patch(oldSubTree, newSubTree, container, instance, anchor)
+        vnode.el = newSubTree.el
+        instance.subTree = newSubTree
+      },
+      {
+        scheduler: () => {
+          // console.log(`update ${instance.type.name}'s data -> `, instance.setupState.count)
+          queueJob(instance.update)
+        },
+      },
+    )
   }
 
   function processText(n1, n2, container) {
@@ -75,7 +85,9 @@ export function createRenderer(options) {
   }
 
   function processFragment(n1, n2, container, parentComponentInstance, anchor) {
-    mountChildren(n2.children, container, parentComponentInstance, anchor)
+    !n1
+      ? mountChildren(n2.children, container, parentComponentInstance, anchor)
+      : patchChildren(n1, n2, container, parentComponentInstance, anchor)
   }
 
   function processElement(n1, n2, container, parentComponentInstance, anchor) {
