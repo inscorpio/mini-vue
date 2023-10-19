@@ -65,4 +65,79 @@ describe('parse', () => {
       })
     })
   })
+
+  describe('element', () => {
+    it('should parse simple element', () => {
+      const template = '<div></div>'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [],
+          },
+        ],
+      })
+    })
+
+    it('should parse multiple element', () => {
+      const template = '<div></div><div></div>'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [],
+          },
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [],
+          },
+        ],
+      })
+    })
+
+    it('should parse nested element', () => {
+      const template = '<div><div><div></div></div></div>'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [
+              {
+                type: NodeTypes.ELEMENT,
+                tag: 'div',
+                children: [
+                  {
+                    type: NodeTypes.ELEMENT,
+                    tag: 'div',
+                    children: [],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      })
+    })
+
+    it('should throw an error when missing closing tag', () => {
+      const template = '<div><span></div>'
+
+      expect(() => {
+        baseParse(template)
+      }).toThrowError('missing closing tag: span')
+    })
+  })
 })
