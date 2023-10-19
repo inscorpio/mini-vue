@@ -157,4 +157,85 @@ describe('parse', () => {
       })
     })
   })
+
+  describe('compound', () => {
+    it('should parse element nested with interpolation', () => {
+      const template = '<div>{{message}}</div>'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [
+              {
+                type: NodeTypes.INTERPOLATION,
+                content: {
+                  type: NodeTypes.SIMPLE_EXPRESSION,
+                  content: 'message',
+                },
+              },
+            ],
+          },
+        ],
+      })
+    })
+
+    it('should parse element nested with text', () => {
+      const template = '<div>hello world</div>'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [
+              {
+                type: NodeTypes.TEXT,
+                content: 'hello world',
+              },
+            ],
+          },
+        ],
+      })
+    })
+
+    it('should parse element nested with interpolation and text', () => {
+      const template = '<div><span>hello </span>{{message}}</div>'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.ELEMENT,
+            tag: 'div',
+            children: [
+              {
+                type: NodeTypes.ELEMENT,
+                tag: 'span',
+                children: [
+                  {
+                    type: NodeTypes.TEXT,
+                    content: 'hello ',
+                  },
+                ],
+              },
+              {
+                type: NodeTypes.INTERPOLATION,
+                content: {
+                  type: NodeTypes.SIMPLE_EXPRESSION,
+                  content: 'message',
+                },
+              },
+            ],
+          },
+        ],
+      })
+    })
+  })
 })

@@ -39,7 +39,9 @@ function parseChildren(context) {
         node = parseElement(context)
       }
     }
-    else {
+
+    // fix: 有可能进入不了上面的分支
+    if (!node) {
       node = parseText(context)
     }
 
@@ -49,7 +51,16 @@ function parseChildren(context) {
 }
 
 function parseText(context) {
-  const content = parseTextData(context, context.source.length)
+  const endTokens = ['<', startDelimiter]
+  // 查找最左边的结束索引
+  const endIndex = endTokens.reduce(
+    (res, v) => {
+      const index = context.source.indexOf(v)
+      return index < res && index !== -1 ? index : res
+    },
+    context.source.length,
+  )
+  const content = parseTextData(context, endIndex)
   return {
     type: NodeTypes.TEXT,
     content,
@@ -77,7 +88,7 @@ function parseElement(context) {
   // parse children
   const children = parseChildren(context)
 
-  const closingTag = closingTagReg.exec(context.source)[1]
+  const closingTag = closingTagReg.exec(context.source)?.[1]
   // 如果开始标签和结束标签匹配的话就继续，否则抛出错误
   if (tag === closingTag) {
     // parse closing tag: </div>
