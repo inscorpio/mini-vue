@@ -39,10 +39,27 @@ function parseChildren(context) {
         node = parseElement(context)
       }
     }
+    else {
+      node = parseText(context)
+    }
 
     nodes.push(node)
   }
   return nodes
+}
+
+function parseText(context) {
+  const content = parseTextData(context, context.source.length)
+  return {
+    type: NodeTypes.TEXT,
+    content,
+  }
+}
+
+function parseTextData(context, length) {
+  const content = context.source.slice(0, length)
+  advanceBy(context, length)
+  return content
 }
 
 // *** 当解析完 或 遇到结束标签时结束
@@ -83,9 +100,8 @@ function parseInterpolation(context) {
 
   // 解析 {{
   advanceBy(context, startDelimiter.length)
-  const content = context.source.slice(0, index - startDelimiter.length)
   // 解析 content
-  advanceBy(context, content.length)
+  const content = parseTextData(context, index - startDelimiter.length)
   // 解析 }}
   advanceBy(context, endDelimiter.length)
 

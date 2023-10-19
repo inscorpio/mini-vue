@@ -140,4 +140,21 @@ describe('parse', () => {
       }).toThrowError('missing closing tag: span')
     })
   })
+
+  describe('text', () => {
+    it('should parse simple text', () => {
+      const template = 'hello world'
+
+      const ast = baseParse(template)
+
+      expect(ast).toEqual({
+        children: [
+          {
+            type: NodeTypes.TEXT,
+            content: 'hello world',
+          },
+        ],
+      })
+    })
+  })
 })
