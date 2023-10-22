@@ -15,6 +15,7 @@ function createRoot(context: { source: string }) {
   const children = parseChildren(context)
   return {
     children,
+    type: NodeTypes.ROOT,
   }
 }
 

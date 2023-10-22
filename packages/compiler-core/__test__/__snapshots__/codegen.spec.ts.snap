@@ -1,3 +1,14 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`codegen > should return a render function with text 1`] = `"export functionrender(_ctx) {return \\"hello world\\"}"`;
+exports[`codegen > should return a render function with interpolation 1`] = `
+"const { toDisplayString: _toDisplayString } = Vue
+return function render(_ctx) {
+  return _toDisplayString(_ctx.message)
+}"
+`;
+
+exports[`codegen > should return a render function with text 1`] = `
+"return function render(_ctx) {
+  return \\"hello world\\"
+}"
+`;
