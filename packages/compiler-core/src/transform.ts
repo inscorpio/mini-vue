@@ -19,7 +19,7 @@ function createRootCodegen(root) {
 
 function traverseNode(node, context) {
   const { nodeTransforms, helpers } = context
-  nodeTransforms.forEach(nodeTransform => nodeTransform(node))
+  nodeTransforms.forEach(nodeTransform => nodeTransform(node, context))
   switch (node.type) {
     case NodeTypes.INTERPOLATION:
       helpers.push(TO_DISPLAY_STRING)
