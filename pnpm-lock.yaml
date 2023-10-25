@@ -27,6 +27,12 @@ importers:
         specifier: ^0.33.0
         version: 0.33.0
 
+  packages/compiler-core:
+    dependencies:
+      '@mini-vue/shared':
+        specifier: '*'
+        version: link:../shared
+
   packages/mini-vue:
     dependencies:
       '@mini-vue/reactivity':

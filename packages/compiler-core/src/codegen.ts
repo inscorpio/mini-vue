@@ -1,3 +1,4 @@
+import { isString, nullable } from '@mini-vue/shared'
 import { NodeTypes } from './ast'
 import { CREATE_ELEMENT_VNODE, TO_DISPLAY_STRING, helperMapName } from './runtimeHelper'
 
@@ -23,19 +24,23 @@ export function generate(ast) {
 function genFunctionPreamble(ast, context) {
   const { helpers } = ast
   const { push } = context
-  const VueBinging = 'Vue'
+  const VueBinding = 'Vue'
   const aliasHelper = (s) => {
     const helper = helperMapName[s]
     return `${helper}: _${helper}`
   }
 
-  if (helpers.length) {
-    push(`const { ${helpers.map(aliasHelper)} } = ${VueBinging}`)
-    push('\n')
+  if (helpers.size) {
+    push(`const { ${Array.from(helpers).map(aliasHelper).join(', ')} } = ${VueBinding}\n`)
   }
 }
 
 function genNode(node, context) {
+  const { push } = context
+  if (isString(node)) {
+    push(node)
+    return
+  }
   switch (node.type) {
     case NodeTypes.TEXT:
       genText(node, context)
@@ -49,15 +54,50 @@ function genNode(node, context) {
     case NodeTypes.ELEMENT:
       genElement(node, context)
       break
+    case NodeTypes.COMPOUND_EXPRESSION:
+      genChildren(node.children, context)
+      break
     default:
       break
   }
 }
 
-function genElement(node: any, context: any) {
+function genChildren(children, context) {
+  children.forEach(child => genNode(child, context))
+}
+
+function genElement(node, context) {
   const { push, helper } = context
-  const { tag } = node
-  push(`${helper(CREATE_ELEMENT_VNODE)}("${tag}")`)
+  const { tag, props, children } = node
+  push(`${helper(CREATE_ELEMENT_VNODE)}(`)
+  push(`"${tag}"`)
+  if (children.length) {
+    push(', ')
+    push(`${nullable(props)}`)
+    push(', ')
+    if (children.length > 1) {
+      push('[')
+      genNodeList(children, context)
+      push(']')
+    }
+    else {
+      genChildren(children, context)
+    }
+  }
+  else if (props) {
+    push(props)
+  }
+  push(')')
+}
+
+function genNodeList(nodes, context) {
+  const { push } = context
+  nodes.forEach((node, i) => {
+    genNode(node, context)
+    if (i < nodes.length - 1) {
+      push(', ')
+    }
+  })
 }
 
 function genExpression(node, context) {

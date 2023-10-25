@@ -1,0 +1,8 @@
+{
+  "name": "@mini-vue/compiler-core",
+  "type": "module",
+  "main": "./src/index.ts",
+  "dependencies": {
+    "@mini-vue/shared": "*"
+  }
+}

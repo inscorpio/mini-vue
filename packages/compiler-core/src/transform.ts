@@ -14,7 +14,8 @@ function createRootHelpers(root, context) {
 }
 
 function createRootCodegen(root) {
-  root.codegenNode = root.children[0]
+  const child = root.children[0]
+  root.codegenNode = child
 }
 
 function traverseNode(node, context) {
@@ -22,10 +23,11 @@ function traverseNode(node, context) {
   nodeTransforms.forEach(nodeTransform => nodeTransform(node, context))
   switch (node.type) {
     case NodeTypes.INTERPOLATION:
-      helpers.push(TO_DISPLAY_STRING)
+      helpers.add(TO_DISPLAY_STRING)
       break
     case NodeTypes.ROOT:
     case NodeTypes.ELEMENT:
+    case NodeTypes.COMPOUND_EXPRESSION:
       traverseChildren(node, context)
       break
     default:
@@ -47,6 +49,6 @@ function createTransformContext(
   return {
     root,
     nodeTransforms,
-    helpers: [],
+    helpers: new Set(),
   }
 }
