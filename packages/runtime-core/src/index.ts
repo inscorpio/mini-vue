@@ -1,6 +1,7 @@
+export * from '@mini-vue/reactivity'
 export * from './createApp'
 export * from './h'
-export { getCurrentInstance } from './component'
+export { getCurrentInstance, registerRuntimeCompiler } from './component'
 export {
   provide,
   inject,
@@ -9,3 +10,7 @@ export {
 export { createRenderer } from './renderer'
 
 export { nextTick } from './scheduler'
+
+export { toDisplayString } from '@mini-vue/shared'
+
+export { createVNode as createElementVNode } from './vnode'

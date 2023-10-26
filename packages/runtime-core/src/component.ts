@@ -4,6 +4,12 @@ import { initSlots } from './componentSlots'
 import { initProps } from './componentProps'
 import { PublicInstanceProxyHandlers } from './componentPublicInstance'
 
+let compiler
+
+export function registerRuntimeCompiler(_compiler) {
+  compiler = _compiler
+}
+
 export function setupComponent(instance) {
   initProps(instance, instance.vnode.props)
   initSlots(instance)
@@ -39,7 +45,10 @@ function handleSetupResult(instance, setupResult) {
 
 function finishComponentSetup(instance) {
   const { type: Component } = instance
-
+  const { template, render } = Component
+  if (compiler && !render) {
+    Component.render = compiler(template)
+  }
   instance.render = Component.render
 }
 

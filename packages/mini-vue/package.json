@@ -3,7 +3,7 @@
   "type": "module",
   "main": "./src/index.ts",
   "dependencies": {
-    "@mini-vue/reactivity": "*",
+    "@mini-vue/compiler-core": "*",
     "@mini-vue/runtime-dom": "*"
   }
 }

@@ -64,7 +64,8 @@ export function createRenderer(options) {
       () => {
         // console.log(`update component: ${instance.type.name}`)
         const { proxy, render, vnode, subTree: oldSubTree } = instance
-        const newSubTree = normalizeVNode(render.call(proxyRefs(proxy)))
+        const context = proxyRefs(proxy)
+        const newSubTree = normalizeVNode(render.call(context, context))
         patch(oldSubTree, newSubTree, container, instance, anchor)
         vnode.el = newSubTree.el
         instance.subTree = newSubTree
